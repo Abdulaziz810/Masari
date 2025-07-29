@@ -1,0 +1,83 @@
+name: tracking_cost
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # --- State Management & Core Utilities ---
+  provider: ^6.1.2                # For state management across the app.
+  intl: ^0.20.2                   # For formatting dates and numbers (internationalization).
+  uuid: ^4.4.0                      # For generating unique IDs.
+
+  # --- Hardware & Permissions ---
+  location: ^6.0.2                # For GPS location tracking and foreground service.
+  permission_handler: ^11.3.1     # For requesting and managing user permissions (e.g., location).
+  geolocator: ^14.0.0               # For accurately calculating the distance between two points.
+
+  # --- Data Persistence ---
+  hive: ^2.2.3                    # Fast, lightweight NoSQL local database for storing trips.
+  hive_flutter: ^1.1.0            # Flutter helpers for Hive.
+  shared_preferences: ^2.2.3      # For saving simple key-value user settings.
+  path_provider: ^2.1.3           # To find the correct local path for storing database files.
+
+  # --- UI & Visuals ---
+  cupertino_icons: ^1.0.8           # iOS-style icons.
+  flutter_svg: ^2.2.0               # To render SVG images (like the currency logo).
+  fl_chart: ^1.0.0                  # For creating interactive charts and graphs.
+  numberpicker: ^2.1.2              # For the number picker widget in settings.
+
+  # --- File Handling & Sharing ---
+  csv: ^6.0.0                     # To generate CSV (Excel) files for export.
+  share_plus: ^11.0.0               # For sharing the exported files via the native share sheet.
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # --- Code Quality ---
+  flutter_lints: ^3.0.0             # Linter rules for better code quality.
+
+  # --- Code & Asset Generation ---
+  build_runner: ^2.4.11             # Core tool for running code generators.
+  hive_generator: ^2.0.1            # Auto-generates adapters for the Hive database.
+  flutter_launcher_icons: ^0.13.1   # Auto-generates the app's launcher icon for all Android sizes.
+  flutter_native_splash: ^2.4.6     # Auto-generates the native splash screen.
+
+
+flutter:
+  generate: true
+  uses-material-design: true
+
+  # --- Assets ---
+  assets:
+    - assets/
+
+
+
+# --- App Launcher Icon Configuration ---
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/logo.webp"
+  min_sdk_android: 21
+
+# --- Native Splash Screen Configuration ---
+flutter_native_splash:
+  color: "#121212"
+  color_dark: "#121212"
+  image: assets/logo.jpg
+  image_dark: assets/logo.jpg
+  android_12:
+    color: "#121212"
+    color_dark: "#121212"
+    image: assets/logo.jpg
+    image_dark: assets/logo.jpg
