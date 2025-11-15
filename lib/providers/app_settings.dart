@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Keys
+/// مفاتيح التخزين المحلي
 const String prefFuelPrice = 'fuelPrice';
 const String prefConsumptionRate = 'consumptionRate';
 const String prefConsumptionMethod = 'consumptionMethod';
@@ -11,22 +11,35 @@ const String prefMaintEnabled = 'maintEnabled';
 const String prefMaintCost = 'maintCost';
 const String prefMaintInterval = 'maintInterval';
 
+/// طريقة حساب استهلاك السيارة:
+/// - kmPerLiter: مثال 15 كم لكل لتر
+/// - litersPer100Km: مثال 8 لتر لكل 100 كم
 enum ConsumptionMethod { kmPerLiter, litersPer100Km }
 
+/// هذا المزود مسؤول عن:
+/// - تحميل/حفظ الإعدادات من SharedPreferences
+/// - توفير ThemeMode
+/// - توفير اللغة الحالية
+/// - إعدادات الوقود والصيانة
+///
+/// ملاحظة:
+/// ما في نصوص هنا. الواجهة هي اللي تترجم.
 class AppSettings extends ChangeNotifier {
-  late SharedPreferences _prefs;
+  SharedPreferences? _prefs;
 
+  // قيم افتراضية معقولة
   double _fuelPrice = 0.0;
   double _consumptionRate = 10.0;
   ConsumptionMethod _consumptionMethod = ConsumptionMethod.kmPerLiter;
   bool _isDarkMode = false;
   Locale? _appLocale;
 
-  // Maintenance Settings
+  // الصيانة
   bool _isMaintenanceEnabled = false;
   double _maintenanceCost = 0.0;
   int _maintenanceInterval = 10000;
 
+  // getters
   double get fuelPrice => _fuelPrice;
   double get consumptionRate => _consumptionRate;
   ConsumptionMethod get consumptionMethod => _consumptionMethod;
@@ -42,51 +55,74 @@ class AppSettings extends ChangeNotifier {
     _loadSettings();
   }
 
+  /// تحميل كل الإعدادات مرة وحدة من التخزين
   Future<void> _loadSettings() async {
-    _prefs = await SharedPreferences.getInstance();
-    _fuelPrice = _prefs.getDouble(prefFuelPrice) ?? 0.0;
-    _consumptionRate = _prefs.getDouble(prefConsumptionRate) ?? 10.0;
-    int methodIndex = _prefs.getInt(prefConsumptionMethod) ?? 0;
+    final prefs = await SharedPreferences.getInstance();
+    _prefs = prefs;
+
+    _fuelPrice = prefs.getDouble(prefFuelPrice) ?? 0.0;
+    _consumptionRate = prefs.getDouble(prefConsumptionRate) ?? 10.0;
+
+    final methodIndex = prefs.getInt(prefConsumptionMethod) ?? 0;
     _consumptionMethod = ConsumptionMethod.values[methodIndex];
-    _isDarkMode = _prefs.getBool(prefIsDarkMode) ?? false;
-    String? languageCode = _prefs.getString(prefLanguageCode);
-    if (languageCode != null) {
+
+    _isDarkMode = prefs.getBool(prefIsDarkMode) ?? false;
+
+    final languageCode = prefs.getString(prefLanguageCode);
+    if (languageCode != null && languageCode.isNotEmpty) {
+      // نخزن بس الكود. الدولة (countryCode) تتحدد من ملف الترجمة.
       _appLocale = Locale(languageCode);
     }
 
-    _isMaintenanceEnabled = _prefs.getBool(prefMaintEnabled) ?? false;
-    _maintenanceCost = _prefs.getDouble(prefMaintCost) ?? 0.0;
-    _maintenanceInterval = _prefs.getInt(prefMaintInterval) ?? 10000;
+    _isMaintenanceEnabled = prefs.getBool(prefMaintEnabled) ?? false;
+    _maintenanceCost = prefs.getDouble(prefMaintCost) ?? 0.0;
+    _maintenanceInterval = prefs.getInt(prefMaintInterval) ?? 10000;
 
     notifyListeners();
   }
 
+  /// عشان ما نخرب لو الواجهة نادت setLocale قبل ما يخلص _loadSettings
+  Future<SharedPreferences> _ensurePrefs() async {
+    if (_prefs != null) return _prefs!;
+    _prefs = await SharedPreferences.getInstance();
+    return _prefs!;
+  }
+
+  /// تغيير اللغة. يقبل أي كود لغة (ar, en, fr, de, ...).
   Future<void> setLocale(Locale locale) async {
     _appLocale = locale;
-    await _prefs.setString(prefLanguageCode, locale.languageCode);
+    final prefs = await _ensurePrefs();
+    await prefs.setString(prefLanguageCode, locale.languageCode);
     notifyListeners();
   }
 
+  /// سعر الوقود لكل لتر
   Future<void> setFuelPrice(double price) async {
     _fuelPrice = price;
-    await _prefs.setDouble(prefFuelPrice, price);
+    final prefs = await _ensurePrefs();
+    await prefs.setDouble(prefFuelPrice, price);
     notifyListeners();
   }
 
+  /// صرفية السيارة + الطريقة
   Future<void> setConsumption(double rate, ConsumptionMethod method) async {
     _consumptionRate = rate;
     _consumptionMethod = method;
-    await _prefs.setDouble(prefConsumptionRate, rate);
-    await _prefs.setInt(prefConsumptionMethod, method.index);
+    final prefs = await _ensurePrefs();
+    await prefs.setDouble(prefConsumptionRate, rate);
+    await prefs.setInt(prefConsumptionMethod, method.index);
     notifyListeners();
   }
 
+  /// الثيم
   Future<void> setDarkMode(bool isDark) async {
     _isDarkMode = isDark;
-    await _prefs.setBool(prefIsDarkMode, isDark);
+    final prefs = await _ensurePrefs();
+    await prefs.setBool(prefIsDarkMode, isDark);
     notifyListeners();
   }
 
+  /// إعدادات الصيانة الدورية
   Future<void> setMaintenanceSettings({
     required bool isEnabled,
     required double cost,
@@ -95,9 +131,37 @@ class AppSettings extends ChangeNotifier {
     _isMaintenanceEnabled = isEnabled;
     _maintenanceCost = cost;
     _maintenanceInterval = interval;
-    await _prefs.setBool(prefMaintEnabled, isEnabled);
-    await _prefs.setDouble(prefMaintCost, cost);
-    await _prefs.setInt(prefMaintInterval, interval);
+
+    final prefs = await _ensurePrefs();
+    await prefs.setBool(prefMaintEnabled, isEnabled);
+    await prefs.setDouble(prefMaintCost, cost);
+    await prefs.setInt(prefMaintInterval, interval);
+
+    notifyListeners();
+  }
+
+  /// اختيارية: لو لاحقًا تبي زر "إرجاع الإعدادات الافتراضية"
+  Future<void> resetToDefaults() async {
+    _fuelPrice = 0.0;
+    _consumptionRate = 10.0;
+    _consumptionMethod = ConsumptionMethod.kmPerLiter;
+    _isDarkMode = false;
+    _appLocale = null;
+
+    _isMaintenanceEnabled = false;
+    _maintenanceCost = 0.0;
+    _maintenanceInterval = 10000;
+
+    final prefs = await _ensurePrefs();
+    await prefs.remove(prefFuelPrice);
+    await prefs.remove(prefConsumptionRate);
+    await prefs.remove(prefConsumptionMethod);
+    await prefs.remove(prefIsDarkMode);
+    await prefs.remove(prefLanguageCode);
+    await prefs.remove(prefMaintEnabled);
+    await prefs.remove(prefMaintCost);
+    await prefs.remove(prefMaintInterval);
+
     notifyListeners();
   }
 }

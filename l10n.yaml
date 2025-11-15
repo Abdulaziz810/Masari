@@ -1,0 +1,22 @@
+# مكان ملفات الترجمة
+arb-dir: lib/l10n
+
+# ملف الأساس اللي ننسخ منه المفاتيح
+template-arb-file: app_en.arb
+
+# اسم ملف الدارت الناتج
+output-localization-file: app_localizations.dart
+
+# اسم الكلاس داخل دارت
+output-class: AppLocalizations
+
+# نخلي الأسماء على شكل camelCase زي appTitle
+preferred-supported-locales:
+  - en
+  - ar
+
+# لو فيه مفتاح ناقص يطلع لك ملف تنبيه
+untranslated-messages-file: lib/l10n/untranslated_messages.txt
+
+# لو ودك تستخدم الحمل المؤجل (يفيد لو بتضيف لغات كثيرة)
+use-deferred-loading: false
